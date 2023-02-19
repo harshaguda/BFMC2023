@@ -1,0 +1,13 @@
+BACKGROUND
+ClosedRoadStand
+TrafficLight
+Pedestrian
+Priority
+Crosswalk
+Stop
+Parking
+Roundabout
+HighwayExit
+NoEntry
+OneWay
+HighwayEntrance

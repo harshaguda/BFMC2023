@@ -1,0 +1,10 @@
+python3 train_ssd.py --dataset-type=voc --data=data/voc --model-dir=models/voc --batch-size=4 --epochs=50000
+python3 run_ssd_example.py 
+
+python3 train_ssd.py --data=data/Jan17 --model-dir=models/Jan17
+python3 run_ssd_example.py  'mb1-ssd' 'models/Jan17/mb1-ssd-Epoch-25-Loss-1.8944334983825684.pth' 'models/Jan17/labels.txt' 'data/Jan17/train/05d91f69787c2df5.jpg'
+
+python3 open_images_downloader.py --max-images=3 --class-names "Apple,Banana" --data=data/Jan17
+
+rosservice call /gazebo/reset_simulation "{}"
+/m/home/home3/30/luj4/unix/.local/bin/tensorboard --logdir sign_light_ped_detection_ssd/src/models/voc/tensorboard/20230121_212421/
