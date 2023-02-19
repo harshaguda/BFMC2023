@@ -11,7 +11,12 @@ Usage
 
 `catkin_make`
 
+or
+
+'catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3'
+
 `source devel/setup.bash`
 
 `roslaunch utils run_automobile_remote.launch`
+
 
