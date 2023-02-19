@@ -13,7 +13,7 @@ Usage
 
 or
 
-'catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3'
+`catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3`
 
 `source devel/setup.bash`
 
