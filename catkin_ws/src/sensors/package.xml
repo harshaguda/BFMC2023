@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>action</name>
+  <name>sensors</name>
   <version>0.0.0</version>
-  <description>The action package</description>
+  <description>The sensors package</description>
 
   <maintainer email="futuremobilitychallenge@bosch.com">BFMC</maintainer>
 
