@@ -17,11 +17,9 @@ class LaneDetection():
         # device=torch.device("cuda:0")
         device=torch.device("cpu")
         pkg_path = os.path.dirname(os.path.abspath(__file__))
-        # model_path =os.path.join(pkg_path, 'models/RealandSimul/mb1-ssd-Epoch-308-Loss-1.0236728725892104.pth')
+        model_path =os.path.join(pkg_path, 'models/RealandSimul/mb1-ssd-Epoch-308-Loss-1.0236728725892104.pth')
         # model_path =os.path.join(pkg_path, 'models/RealandSimul/mb1-ssd-Epoch-1709-Loss-0.8591486492058199.pth') 
-        # model_path =os.path.join(pkg_path, 'models/real/mb1-ssd-Epoch-295-Loss-0.9722869637257913.pth')
-        model_path =os.path.join(pkg_path, 'models/real/mb1-ssd-Epoch-3293-Loss-0.6750854221720468.pth')
-        label_path = os.path.join(pkg_path, 'models/voc/labels.txt')
+        label_path = os.path.join(pkg_path, 'models/RealandSimul/labels.txt')
         self.class_names = [name.strip() for name in open(label_path).readlines()]
         net = create_mobilenetv1_ssd(len(self.class_names), is_test=True, device=device)
         net.load(model_path)
@@ -58,9 +56,9 @@ class LaneDetection():
                         1,  # font scale
                         (255, 0, 255),
                         2)  # line type
-        cv2.imshow('result', self.cv_image)
-        cv2.waitKey(1)
-        print(f"Found {len(probs)} objects.")
+        #cv2.imshow('result', self.cv_image)
+        #cv2.waitKey(1)
+        #print(f"Found {len(probs)} objects.")
 
 
 if __name__ == '__main__':
