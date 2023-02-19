@@ -1,0 +1,5 @@
+<launch>
+<arg name="map_file" default="$(find robot_pose_ekf)/maps/Test_track.yaml"/>
+<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+</launch>
+
