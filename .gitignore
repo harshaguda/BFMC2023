@@ -1,0 +1,9 @@
+catkin_ws/build
+catkin_ws/devel
+.vscode
+catkin_ws/*/*/*/*/*/*/*/*/__pycache__/
+catkin_ws/*/*/*/*/*/*/*/__pycache__/
+catkin_ws/*/*/*/*/*/*/__pycache__/
+catkin_ws/*/*/*/*/*/__pycache__/
+catkin_ws/*/*/*//*/__pycache__/
+catkin_ws/src/perception/sign_light_ped_detection_ssd/src/detect_env/
