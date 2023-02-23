@@ -4,12 +4,13 @@ import rospy
 
 from generate_command import generate_command
 from command_publisher import command_publisher
+from state_publisher import state_publisher
 from steering_model import AckermannModel
 
-VEHICLE_IGNITION		= False
+VEHICLE_IGNITION		    = False
 INITIAL_VEHICLE_SPEED   	= 0.0
 START_VEHICLE_SPEED 		= 12.0
-STEERING_OFFSET    		= -2.0
+STEERING_OFFSET    		    = -2.0
 
 def curvature_callback(data):
     curvature_value = data
@@ -45,6 +46,7 @@ def decision_maker():
         steering_value = vehicle_model.calculate_steering_command(curvature)
         steering_command = generate_command(2, steering_value)
         command_publisher(steering_command)
+        state_publisher(current_speed, steering_command, curvature)
         rate.sleep()
 
 if __name__ == '__main__':
