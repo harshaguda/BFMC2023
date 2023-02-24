@@ -1,6 +1,9 @@
 # BFMC2023
 
-This is for controlling car using Raspberry Pi.
+This is for controlling car using Raspberry Pi. 
+
+If you are using fresh install of RPI image, do the setting up steps from [here](RPISetup.md)
+
 Install ROS using the instructions [here](https://github.com/ECC-BFMC/Brain_ROS)
 
 Usage 
