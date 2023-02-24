@@ -7,3 +7,11 @@ catkin_ws/*/*/*/*/*/*/__pycache__/
 catkin_ws/*/*/*/*/*/__pycache__/
 catkin_ws/*/*/*//*/__pycache__/
 catkin_ws/src/perception/sign_light_ped_detection_ssd/src/detect_env/
+
+catkin_ws/src/geometry
+catkin_ws/src/geometry2
+catkin_ws/src/common_msgs
+catkin_ws/src/actionlib
+
+catkin_ws/build_isolated
+catkin_ws/devel_isolated

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import time
 import smbus
 
@@ -14,7 +16,7 @@ bus = smbus.SMBus(1)
 imu = MPU9250.MPU9250(bus, address)
 imu.begin()
 
-imu.loadCalibDataFromFile("/home/alphatrion/IMUdata/calib_real4.json")
+#imu.loadCalibDataFromFile("/home/alphatrion/IMUdata/calib_real4.json")
 
 class IMUNode():
 	def __init__(self):
