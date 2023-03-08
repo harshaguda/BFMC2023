@@ -35,7 +35,7 @@ import json
 
 import rospy
 
-from std_msgs.msg      import String
+from std_msgs.msg      import String, Float32
 from utils.srv        import subscribing, subscribingResponse
 
 class serialNODE():
@@ -64,7 +64,9 @@ class serialNODE():
         
         self.command_subscriber = rospy.Subscriber("/automobile/command", String, self._write)
         
-        self.subscribe = rospy.Service("command_feedback_en", subscribing, self._subscribe)        
+        self.subscribe = rospy.Service("command_feedback_en", subscribing, self._subscribe)   
+
+        self.encpub = rospy.Publisher("/sensor/encoder", Float32, queue_size=1)      
     
      # ===================================== RUN ==========================================
     def run(self):
@@ -91,6 +93,9 @@ class serialNODE():
                     self.isResponse=False
                     if len(self.buff)!=0:
                         self.__checkSubscriber(self.buff)
+                        # print(self.buff)
+                        if '@5' in self.buff:
+                            self.encpub.publish(float(self.buff.replace('@5:','').replace(';;','')))
                     self.buff=""
                 if self.isResponse:
                     self.buff+=read_chr
@@ -103,9 +108,11 @@ class serialNODE():
         """ Checking the list of the waiting object to redirectionate the message to them. 
         """
         l_key=f_response[1:5]
+    
         if l_key in self.__subscribers:
             subscribers = self.__subscribers[l_key]
             for sub in subscribers:
+
                 sub.publish(f_response)
     
     def _subscribe(self, msg):
