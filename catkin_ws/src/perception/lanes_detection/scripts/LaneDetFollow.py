@@ -1,7 +1,11 @@
+#!/usr/bin/env python3
+
 import numpy as np
 import rospy
 import cv2
 from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+
 
 from std_msgs.msg      import String
 import time
@@ -255,7 +259,7 @@ class LaneDetection():
         self.cv_image = np.zeros((640, 480))
         rospy.init_node('LanesDetectionNode', anonymous=False)
         self.image_sub = rospy.Subscriber("/automobile/image_raw", Image, self.callback)
-        self.LanePub = rospy.Publisher('/lanes/lanes_detected', Lanes, queue_size=1)
+        # self.LanePub = rospy.Publisher('/lanes/lanes_detected', Lanes, queue_size=1)
         rospy.spin()
 
     def callback(self, data):
@@ -268,14 +272,14 @@ class LaneDetection():
         cv2.imshow('result', img)
         # cmd = '{\"action\": \"2\", \"steerAngle\": 0.0}'
         cmd = get_steer_cmd(curverad)
-        pub.publish(cmd)
+        # pub.publish(cmd)
         
         key = cv2.waitKey(1) & 0xFF
         
         
         # if the `q` key was pressed, break from the loop
-        if key == ord("q"):
-            break
+        # if key == ord("q"):
+        #     break
 
 
 if __name__ == "__main__":
