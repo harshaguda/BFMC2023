@@ -71,7 +71,7 @@ class LaneDetection():
         out_img = np.dstack((img, img, img))*255
 
         cv2.imshow('result', out_img[380:450,:])
-        print(np.count_nonzero(out_img[380:450,:]))
+        # print(np.count_nonzero(out_img[380:450,:]))
         nzcnt = np.count_nonzero(out_img[380:450,:])
         if nzcnt > 10000:
             if time.time() - self.start > 3:
@@ -79,7 +79,7 @@ class LaneDetection():
                 self.start = time.time()
 
                 self.stopcounter.publish(self.stop_signnum)
-        
+                print('Stop line #',self.stop_signnum)
         
         key = cv2.waitKey(1) & 0xFF
         

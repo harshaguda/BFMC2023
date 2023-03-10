@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import rospy
+import math
 
-from std_msgs.msg import String
+from std_msgs.msg import String, Int16
+from utils.msg import localisation
 import json
 
 from custom_msg.msg import Omnidetection
@@ -16,6 +18,11 @@ class DecisionMaker():
         self.cross_area = 0.0
         self.ped_area_max = 17000
         self.stopcounter= 0
+        self.heading = 0.0
+        rospy.init_node('decision_maker_node', anonymous=True)
+        self.steer(0.0)
+        self.move(0.20)
+        
     def get_area(self, box):
         
         w = box[2] - box[0]
@@ -24,9 +31,24 @@ class DecisionMaker():
         return w*h
 
     def right_curve_short(self):
-        curve_time = rospy.Time.now() + rospy.Duration(5.22)
-        while(rospy.Time.now() <= curve_time):
+        curve_time = rospy.Time.now() + rospy.Duration(10.72)
+        rospy.sleep(1.5)
+        self.move(0.12)
+        print('start steering')
+        #while(rospy.Time.now() <= curve_time):
+        while not (self.heading <= 0.1):
             self.steer(21.61) #21.35
+        while not (self.heading <= 0.01):
+            self.steer(15.61) #21.35
+        self.move(0.2)
+        self.steer(0.0)
+        print('stopped steering')
+
+    def take_turn(self, direction):
+        rospy.sleep(1.6) # Time to aligh rear axle to stop line
+        self.move(0.1)
+        print('start steering')
+        current_heading_pose = self.heading//math.pi
 
     def decisions(self):
         if self.ped_area > self.ped_area_max:
@@ -35,7 +57,8 @@ class DecisionMaker():
         elif self.ped_area < 10000:
             self.move(0.20)
         if self.stopcounter == 1:
-            self.curve1()
+            print('steer')
+            self.right_curve_short()
 
     def detection_callback(self, data):
         labels = data.labels
@@ -45,8 +68,15 @@ class DecisionMaker():
             i = labels.index(3)
             self.ped_area = self.get_area(bboxs[i*4:(i+1)*4])
             print('Ped ', self.ped_area)
-        self.decisions()
+        
+    def lane_count(self, data):
+        self.stopcounter = data.data
+        if self.stopcounter == 1:
+            self.right_curve_short()
+        # print(self.stopcounter)
 
+    def update_heading(self, data):
+        self.heading = 0.5*(data.rotA + data.rotB)
 
     def command_publisher(self, command):
         command = json.dumps(command)
@@ -70,11 +100,14 @@ class DecisionMaker():
         # anonymous=True flag means that rospy will choose a unique
         # name for our 'listener' node so that multiple listeners can
         # run simultaneously.
-        rospy.init_node('decision_maker_node', anonymous=True)
-
+        
         rospy.Subscriber("/perception/omni_detection", Omnidetection, self.detection_callback)
-
+        rospy.Subscriber('/lanes/stop_line', Int16, self.lane_count)
+        rospy.Subscriber('/automobile/localisation', localisation, self.update_heading)
         # spin() simply keeps python from exiting until this node is stopped
+
+        # self.decisions()
+
         rospy.spin()
 
 # if current_state == 'move':
