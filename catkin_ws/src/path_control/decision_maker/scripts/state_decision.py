@@ -47,8 +47,22 @@ class DecisionMaker():
     def take_turn(self, direction):
         rospy.sleep(1.6) # Time to aligh rear axle to stop line
         self.move(0.1)
+        steering_command = [21.61, -17.14]
         print('start steering')
-        current_heading_pose = self.heading//math.pi
+        current_heading_pose = round(self.heading/(math.pi/2))
+        if direction=="Right": 
+            desired_heading = (current_heading_pose-1)*(math.pi/2)
+            while not (-1*(desired_heading+0.1) <= self.heading <= desired_heading+0.1):
+                self.steer(steering_command[0])
+            while not (-1*(desired_heading+0.01) <= self.heading <= desired_heading+0.01):
+                self.steer(0.75*steering_command[0])
+        elif direction=="Left":
+            desired_heading = (current_heading_pose+1)*(math.pi/2)
+            while not (-1*(desired_heading+0.1) <= self.heading <= desired_heading+0.1):
+                self.steer(steering_command[1])
+            while not (-1*(desired_heading+0.01) <= self.heading <= desired_heading+0.01):
+                self.steer(0.75*steering_command[1])
+        print('stopped steering')
 
     def decisions(self):
         if self.ped_area > self.ped_area_max:
@@ -58,7 +72,12 @@ class DecisionMaker():
             self.move(0.20)
         if self.stopcounter == 1:
             print('steer')
-            self.right_curve_short()
+            #self.right_curve_short()
+            self.take_turn("Right")
+        if self.stopcounter == 2:
+            print('steer')
+            #self.right_curve_short()
+            self.take_turn("Right")
 
     def detection_callback(self, data):
         labels = data.labels
@@ -72,7 +91,11 @@ class DecisionMaker():
     def lane_count(self, data):
         self.stopcounter = data.data
         if self.stopcounter == 1:
-            self.right_curve_short()
+            #self.right_curve_short()
+            self.take_turn("Right")
+        elif self.stopcounter == 2:
+            #self.right_curve_short()
+            self.take_turn("Left")
         # print(self.stopcounter)
 
     def update_heading(self, data):
