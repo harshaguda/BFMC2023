@@ -7,7 +7,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 
-from std_msgs.msg      import String
+from std_msgs.msg      import String, Int16
 import time
 import json
 
@@ -40,6 +40,9 @@ def pipeline(img, s_thresh=(100, 255), sx_thresh=(15, 255)):
     combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
     return combined_binary
 
+def detect_stop_line(img):
+    return 
+
 class LaneDetection():
     def __init__(self):
         """
@@ -49,7 +52,9 @@ class LaneDetection():
         self.cv_image = np.zeros((640, 480))
         rospy.init_node('LanesDetectionNode', anonymous=False)
         self.image_sub = rospy.Subscriber("/automobile/image_raw", Image, self.callback)
-        # self.LanePub = rospy.Publisher('/lanes/lanes_detected', Lanes, queue_size=1)
+        self.stop_signnum = 0
+        self.start = time.time()
+        self.stopcounter = rospy.Publisher('/lanes/stop_line', Int16, queue_size=1)
         rospy.spin()
 
     def callback(self, data):
@@ -64,16 +69,24 @@ class LaneDetection():
         img = perspective_warp(combined_binary, src=initp, dst=dst_)
         # print(np.count_nonzero(current_frame))
         out_img = np.dstack((img, img, img))*255
-        cv2.imshow('result', out_img)
-        # cmd = '{\"action\": \"2\", \"steerAngle\": 0.0}'
-        # pub.publish(cmd)
+
+        cv2.imshow('result', out_img[380:450,:])
+        print(np.count_nonzero(out_img[380:450,:]))
+        nzcnt = np.count_nonzero(out_img[380:450,:])
+        if nzcnt > 10000:
+            if time.time() - self.start > 3:
+                self.stop_signnum += 1
+                self.start = time.time()
+
+                self.stopcounter.publish(self.stop_signnum)
+        
         
         key = cv2.waitKey(1) & 0xFF
         
         
-        # if the `q` key was pressed, break from the loop
-        # if key == ord("q"):
-        #     break
+        # if the `q` key was pressed, exit.
+        if key == ord("q"):
+            exit()
 
 
 if __name__ == "__main__":
