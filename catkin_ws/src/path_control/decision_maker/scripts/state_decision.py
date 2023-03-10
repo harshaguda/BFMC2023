@@ -15,6 +15,7 @@ class DecisionMaker():
         self.ped_area = 0.0
         self.cross_area = 0.0
         self.ped_area_max = 17000
+        self.stopcounter= 0
     def get_area(self, box):
         
         w = box[2] - box[0]
@@ -22,13 +23,19 @@ class DecisionMaker():
 
         return w*h
 
+    def right_curve_short(self):
+        curve_time = rospy.Time.now() + rospy.Duration(5.22)
+        while(rospy.Time.now() <= curve_time):
+            self.steer(21.61) #21.35
+
     def decisions(self):
         if self.ped_area > self.ped_area_max:
             self.move(0.0)
             # self.moving = False
         elif self.ped_area < 10000:
             self.move(0.20)
-
+        if self.stopcounter == 1:
+            self.curve1()
 
     def detection_callback(self, data):
         labels = data.labels
@@ -50,6 +57,10 @@ class DecisionMaker():
 
     def move(self, speed : float):
         command = {"action": "1", "speed": speed}
+        self.command_publisher(command)
+
+    def steer(self, steer : float):
+        command = {"action": "2", "steerAngle": steer}
         self.command_publisher(command)
 
     def listener(self):
