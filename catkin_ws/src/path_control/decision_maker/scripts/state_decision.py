@@ -3,7 +3,7 @@ import rospy
 import math
 
 from std_msgs.msg import String, Int16
-from utils.msg import localisation
+from utils.msg import localisation, IMU
 import json
 
 from custom_msg.msg import Omnidetection
@@ -19,6 +19,7 @@ class DecisionMaker():
         self.ped_area_max = 17000
         self.stopcounter= 0
         self.heading = 0.0
+        self.manual_turn_counter = 0
         rospy.init_node('decision_maker_node', anonymous=True)
         self.steer(0.0)
         self.move(0.20)
@@ -30,38 +31,30 @@ class DecisionMaker():
 
         return w*h
 
-    def right_curve_short(self):
-        curve_time = rospy.Time.now() + rospy.Duration(10.72)
-        rospy.sleep(1.5)
-        self.move(0.12)
-        print('start steering')
-        #while(rospy.Time.now() <= curve_time):
-        while not (self.heading <= 0.1):
-            self.steer(21.61) #21.35
-        while not (self.heading <= 0.01):
-            self.steer(15.61) #21.35
-        self.move(0.2)
-        self.steer(0.0)
-        print('stopped steering')
-
     def take_turn(self, direction):
+        self.move(0.2)
         rospy.sleep(1.6) # Time to aligh rear axle to stop line
-        self.move(0.1)
-        steering_command = [21.61, -17.14]
+        self.move(0.12)
+        steering_command = [21.61, -14.2]
         print('start steering')
         current_heading_pose = round(self.heading/(math.pi/2))
         if direction=="Right": 
             desired_heading = (current_heading_pose-1)*(math.pi/2)
-            while not (-1*(desired_heading+0.1) <= self.heading <= desired_heading+0.1):
+            print(desired_heading)
+            while not (desired_heading-0.1 <= self.heading <= desired_heading+0.1):
                 self.steer(steering_command[0])
-            while not (-1*(desired_heading+0.01) <= self.heading <= desired_heading+0.01):
-                self.steer(0.75*steering_command[0])
+            while not (desired_heading-0.015 <= self.heading <= desired_heading+0.015):
+                self.steer(0.3*steering_command[0])
         elif direction=="Left":
+            #rospy.sleep(1.5)
             desired_heading = (current_heading_pose+1)*(math.pi/2)
-            while not (-1*(desired_heading+0.1) <= self.heading <= desired_heading+0.1):
+            print(desired_heading)
+            while not (desired_heading-0.1 <= self.heading <= desired_heading+0.1):
                 self.steer(steering_command[1])
-            while not (-1*(desired_heading+0.01) <= self.heading <= desired_heading+0.01):
-                self.steer(0.75*steering_command[1])
+            while not (desired_heading-0.015 <= self.heading <= desired_heading+0.015):
+                self.steer(0.3*steering_command[1])
+        self.move(0.7)
+        self.steer(0.0)
         print('stopped steering')
 
     def decisions(self):
@@ -70,14 +63,14 @@ class DecisionMaker():
             # self.moving = False
         elif self.ped_area < 10000:
             self.move(0.20)
-        if self.stopcounter == 1:
+        if self.stopcounter in [1, 7]:
             print('steer')
             #self.right_curve_short()
             self.take_turn("Right")
-        if self.stopcounter == 2:
+        if self.stopcounter in [3, 5]:
             print('steer')
             #self.right_curve_short()
-            self.take_turn("Right")
+            self.take_turn("Left")
 
     def detection_callback(self, data):
         labels = data.labels
@@ -90,16 +83,29 @@ class DecisionMaker():
         
     def lane_count(self, data):
         self.stopcounter = data.data
-        if self.stopcounter == 1:
+        if self.stopcounter in [1, 7]:
             #self.right_curve_short()
             self.take_turn("Right")
-        elif self.stopcounter == 2:
+        elif self.stopcounter in [3, 5]:
             #self.right_curve_short()
             self.take_turn("Left")
         # print(self.stopcounter)
 
     def update_heading(self, data):
         self.heading = 0.5*(data.rotA + data.rotB)
+
+    def update_imu(self, data):
+        if(self.stopcounter == 7):
+            if(data.pitch <= -0.13 and self.manual_turn_counter == 0):
+                self.manual_turn_counter = 1
+            if(data.pitch >=  0.13 and self.manual_turn_counter == 1):
+                self.manual_turn_counter = 2
+            if(data.pitch <= 0.001 and self.manual_turn_counter == 2):
+                self.take_turn("Right")
+            print(self.manual_turn_counter)
+            self.move(0.2)
+            rospy.sleep(1)
+            
 
     def command_publisher(self, command):
         command = json.dumps(command)
@@ -127,8 +133,8 @@ class DecisionMaker():
         rospy.Subscriber("/perception/omni_detection", Omnidetection, self.detection_callback)
         rospy.Subscriber('/lanes/stop_line', Int16, self.lane_count)
         rospy.Subscriber('/automobile/localisation', localisation, self.update_heading)
+        rospy.Subscriber('/automobile/IMU', IMU, self.update_imu)
         # spin() simply keeps python from exiting until this node is stopped
-
         # self.decisions()
 
         rospy.spin()
