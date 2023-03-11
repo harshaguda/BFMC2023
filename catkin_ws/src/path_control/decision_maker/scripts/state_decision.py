@@ -20,6 +20,8 @@ class DecisionMaker():
         self.stopcounter= 0
         self.heading = 0.0
         self.manual_turn_counter = 0
+        self.desired_heading = math.pi/2
+        self.go_straight = True
         rospy.init_node('decision_maker_node', anonymous=True)
         self.steer(0.0)
         self.move(0.20)
@@ -31,7 +33,13 @@ class DecisionMaker():
 
         return w*h
 
+    def keep_straight(self):
+        diff = self.heading - self.desired_heading
+        self.steer(diff*100)
+        print(diff)
+        
     def take_turn(self, direction):
+        self.go_straight = False
         self.move(0.2)
         rospy.sleep(1.6) # Time to aligh rear axle to stop line
         self.move(0.12)
@@ -39,22 +47,23 @@ class DecisionMaker():
         print('start steering')
         current_heading_pose = round(self.heading/(math.pi/2))
         if direction=="Right": 
-            desired_heading = (current_heading_pose-1)*(math.pi/2)
-            print(desired_heading)
-            while not (desired_heading-0.1 <= self.heading <= desired_heading+0.1):
+            self.desired_heading = (current_heading_pose-1)*(math.pi/2)
+            print(self.desired_heading)
+            while not (self.desired_heading-0.1 <= self.heading <= self.desired_heading+0.1):
                 self.steer(steering_command[0])
-            while not (desired_heading-0.015 <= self.heading <= desired_heading+0.015):
+            while not (self.desired_heading-0.015 <= self.heading <= self.desired_heading+0.015):
                 self.steer(0.3*steering_command[0])
         elif direction=="Left":
             #rospy.sleep(1.5)
-            desired_heading = (current_heading_pose+1)*(math.pi/2)
-            print(desired_heading)
-            while not (desired_heading-0.1 <= self.heading <= desired_heading+0.1):
+            self.desired_heading = (current_heading_pose+1)*(math.pi/2)
+            print(self.desired_heading)
+            while not (self.desired_heading-0.1 <= self.heading <= self.desired_heading+0.1):
                 self.steer(steering_command[1])
-            while not (desired_heading-0.015 <= self.heading <= desired_heading+0.015):
+            while not (self.desired_heading-0.015 <= self.heading <= self.desired_heading+0.015):
                 self.steer(0.3*steering_command[1])
         self.move(0.7)
         self.steer(0.0)
+        self.go_straight = True
         print('stopped steering')
 
     def decisions(self):
@@ -93,18 +102,25 @@ class DecisionMaker():
 
     def update_heading(self, data):
         self.heading = 0.5*(data.rotA + data.rotB)
+        if self.go_straight:
+            self.keep_straight()
 
     def update_imu(self, data):
-        if(self.stopcounter == 7):
-            if(data.pitch <= -0.13 and self.manual_turn_counter == 0):
-                self.manual_turn_counter = 1
-            if(data.pitch >=  0.13 and self.manual_turn_counter == 1):
-                self.manual_turn_counter = 2
-            if(data.pitch <= 0.001 and self.manual_turn_counter == 2):
-                self.take_turn("Right")
-            print(self.manual_turn_counter)
+        # if(self.stopcounter == 7):
+
+        if(data.pitch <= -0.13 and self.manual_turn_counter == 0):
+            self.manual_turn_counter = 1
+        if(data.pitch >=  0.13 and self.manual_turn_counter == 1):
+            self.manual_turn_counter = 2
+        if(data.pitch <= 0.001 and self.manual_turn_counter == 2):
             self.move(0.2)
-            rospy.sleep(1)
+            rospy.sleep(1.35)
+            self.take_turn("Right")
+            # self.move(0.2)
+            # rospy.sleep(1)
+            self.manual_turn_counter = 0
+        print(self.manual_turn_counter)
+        
             
 
     def command_publisher(self, command):
