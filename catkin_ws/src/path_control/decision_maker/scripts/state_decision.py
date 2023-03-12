@@ -35,19 +35,23 @@ class DecisionMaker():
 
     def keep_straight(self):
         diff = self.heading - self.desired_heading
-        self.steer(diff*100)
+        diff = diff % math.pi
         print(diff)
+        if abs(diff) < 0.1 :
+            self.steer(diff*100)
+            # print(diff)
         
     def take_turn(self, direction):
         self.go_straight = False
         self.move(0.2)
-        rospy.sleep(1.6) # Time to aligh rear axle to stop line
+        rospy.sleep(1.4) # Time to aligh rear axle to stop line
         self.move(0.12)
         steering_command = [21.61, -14.2]
         print('start steering')
         current_heading_pose = round(self.heading/(math.pi/2))
         if direction=="Right": 
-            self.desired_heading = (current_heading_pose-1)*(math.pi/2)
+            self.desired_heading = ((current_heading_pose-1)*(math.pi/2)) % math.pi
+           
             print(self.desired_heading)
             while not (self.desired_heading-0.1 <= self.heading <= self.desired_heading+0.1):
                 self.steer(steering_command[0])
@@ -55,7 +59,7 @@ class DecisionMaker():
                 self.steer(0.3*steering_command[0])
         elif direction=="Left":
             #rospy.sleep(1.5)
-            self.desired_heading = (current_heading_pose+1)*(math.pi/2)
+            self.desired_heading = ((current_heading_pose+1)*(math.pi/2)) 
             print(self.desired_heading)
             while not (self.desired_heading-0.1 <= self.heading <= self.desired_heading+0.1):
                 self.steer(steering_command[1])
@@ -70,16 +74,17 @@ class DecisionMaker():
         if self.ped_area > self.ped_area_max:
             self.move(0.0)
             # self.moving = False
-        elif self.ped_area < 10000:
-            self.move(0.20)
-        if self.stopcounter in [1, 7]:
-            print('steer')
-            #self.right_curve_short()
-            self.take_turn("Right")
-        if self.stopcounter in [3, 5]:
-            print('steer')
-            #self.right_curve_short()
-            self.take_turn("Left")
+            if self.ped_area < 10000:
+                self.move(0.70)
+
+        # if self.stopcounter in [1, 7]:
+        #     print('steer')
+        #     #self.right_curve_short()
+        #     self.take_turn("Right")
+        # if self.stopcounter in [3, 5]:
+        #     print('steer')
+        #     #self.right_curve_short()
+        #     self.take_turn("Left")
 
     def detection_callback(self, data):
         labels = data.labels
@@ -89,6 +94,7 @@ class DecisionMaker():
             i = labels.index(3)
             self.ped_area = self.get_area(bboxs[i*4:(i+1)*4])
             print('Ped ', self.ped_area)
+        self.decisions()
         
     def lane_count(self, data):
         self.stopcounter = data.data
@@ -106,20 +112,20 @@ class DecisionMaker():
             self.keep_straight()
 
     def update_imu(self, data):
-        # if(self.stopcounter == 7):
+        if(self.stopcounter == 7):
 
-        if(data.pitch <= -0.13 and self.manual_turn_counter == 0):
-            self.manual_turn_counter = 1
-        if(data.pitch >=  0.13 and self.manual_turn_counter == 1):
-            self.manual_turn_counter = 2
-        if(data.pitch <= 0.001 and self.manual_turn_counter == 2):
-            self.move(0.2)
-            rospy.sleep(1.35)
-            self.take_turn("Right")
-            # self.move(0.2)
-            # rospy.sleep(1)
-            self.manual_turn_counter = 0
-        print(self.manual_turn_counter)
+            if(data.pitch <= -0.13 and self.manual_turn_counter == 0):
+                self.manual_turn_counter = 1
+            if(data.pitch >=  0.13 and self.manual_turn_counter == 1):
+                self.manual_turn_counter = 2
+            if(data.pitch <= 0.001 and self.manual_turn_counter == 2):
+                self.move(0.2)
+                rospy.sleep(0.9)
+                self.take_turn("Right")
+                # self.move(0.2)
+                # rospy.sleep(1)
+                self.manual_turn_counter = 0
+        # print(self.manual_turn_counter)
         
             
 

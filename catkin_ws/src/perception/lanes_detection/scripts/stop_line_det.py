@@ -53,7 +53,7 @@ class LaneDetection():
         rospy.init_node('LanesDetectionNode', anonymous=False)
         self.image_sub = rospy.Subscriber("/automobile/image_raw", Image, self.callback)
         self.stop_signnum = 0
-        self.start = time.time()
+        self.start = rospy.Time.now()
         self.stopcounter = rospy.Publisher('/lanes/stop_line', Int16, queue_size=1)
         rospy.spin()
 
@@ -74,9 +74,9 @@ class LaneDetection():
         # print(np.count_nonzero(out_img[380:450,:]))
         nzcnt = np.count_nonzero(out_img[380:450,:])
         if nzcnt > 10000:
-            if time.time() - self.start > 3:
+            if rospy.Time.now() - self.start > rospy.Duration(3):
                 self.stop_signnum += 1
-                self.start = time.time()
+                self.start = rospy.Time.now()
 
                 self.stopcounter.publish(self.stop_signnum)
                 print('Stop line #',self.stop_signnum)
