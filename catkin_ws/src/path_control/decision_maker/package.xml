@@ -60,7 +60,7 @@
   <build_export_depend>utils</build_export_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <exec_depend>nav_msgs</exec_depend>
+  <!-- <exec_depend>nav_msgs</exec_depend> -->
   <exec_depend>utils</exec_depend>
   
 
