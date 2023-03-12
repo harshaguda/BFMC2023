@@ -2,7 +2,7 @@
 import rospy
 import math
 
-from std_msgs.msg import String, Int16
+from std_msgs.msg import String, Int16, Byte
 from utils.msg import localisation, IMU
 import json
 
@@ -22,6 +22,7 @@ class DecisionMaker():
         self.manual_turn_counter = 0
         self.desired_heading = math.pi/2
         self.go_straight = True
+        self.traffic_light = 0
         rospy.init_node('decision_maker_node', anonymous=True)
         self.steer(0.0)
         self.move(0.20)
@@ -100,9 +101,23 @@ class DecisionMaker():
         else:
             self.no_ped = True
         self.decisions()
+
+    def wait_for_traffic_light(self):
+        while(self.traffic_light != 2):
+            self.move(0.0)
         
+    def manual_maneuver(self):
+        if self.stopcounter == 1:
+            self.wait_for_traffic_light()
+        elif self.stopcounter in [2, 3]:
+            self.move(0.0)
+            rospy.sleep(3.2)
+            self.move(0.7)
+        elif 
+
     def lane_count(self, data):
         self.stopcounter = data.data
+        self.manual_maneuver()
         if self.stopcounter in [1, 7]:
             #self.right_curve_short()
             self.take_turn("Right")
@@ -132,7 +147,8 @@ class DecisionMaker():
                 self.manual_turn_counter = 0
         # print(self.manual_turn_counter)
         
-            
+    def update_traffic_light(self, data):
+        self.traffic_light = data.data        
 
     def command_publisher(self, command):
         command = json.dumps(command)
@@ -161,6 +177,7 @@ class DecisionMaker():
         rospy.Subscriber('/lanes/stop_line', Int16, self.lane_count)
         rospy.Subscriber('/automobile/localisation', localisation, self.update_heading)
         rospy.Subscriber('/automobile/IMU', IMU, self.update_imu)
+        rospy.Subscriber('/automobile/trafficlight/master', Byte, self.update_traffic_light)
         # spin() simply keeps python from exiting until this node is stopped
         # self.decisions()
 
