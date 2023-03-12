@@ -73,9 +73,11 @@ class DecisionMaker():
     def decisions(self):
         if self.ped_area > self.ped_area_max:
             self.move(0.0)
-            # self.moving = False
-            if self.ped_area < 10000:
-                self.move(0.70)
+            self.moving = False
+        if (self.no_ped) & (self.moving == False):
+            self.move(0.70)
+            self.moving = True
+
 
         # if self.stopcounter in [1, 7]:
         #     print('steer')
@@ -91,9 +93,12 @@ class DecisionMaker():
         bboxs = data.bboxs
         
         if 3 in labels:
+            self.no_ped = False
             i = labels.index(3)
             self.ped_area = self.get_area(bboxs[i*4:(i+1)*4])
             print('Ped ', self.ped_area)
+        else:
+            self.no_ped = True
         self.decisions()
         
     def lane_count(self, data):
