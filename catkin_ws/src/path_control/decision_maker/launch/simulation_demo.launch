@@ -1,0 +1,8 @@
+<launch>
+    <include file="$(find utils)/launch/run_automobile.launch" />
+    
+    <!-- <node pkg="output" type="serialDealerNODE.py" 		name="serialDealerNODE"  		output="screen"/> -->
+    <node pkg="lanes_detection" type="stop_line_det.py" 		name="StopLineNODE"  		output="screen"/>
+    <node pkg="decision_maker" type="state_decision.py" 		name="DecisionNode"  		output="screen"/>
+    <node pkg="sign_light_ped_detection_ssd" type="omni_detection.py" 		name="SignDetNODE"  		output="screen"/>
+</launch>

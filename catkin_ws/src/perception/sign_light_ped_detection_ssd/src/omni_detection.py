@@ -45,6 +45,7 @@ class LaneDetection():
         msg_to_send.labels = labels.numpy().astype(int)
         msg_to_send.probs = probs.numpy().astype(float)
         self.DetectionPub.publish(msg_to_send)
+        # rospy.Rate(10).sleep()
         # Visualization
         for i in range(bboxs.size(0)):
             box = bboxs[i, :].numpy().astype(int)
@@ -56,8 +57,8 @@ class LaneDetection():
                         1,  # font scale
                         (255, 0, 255),
                         2)  # line type
-        #cv2.imshow('result', self.cv_image)
-        #cv2.waitKey(1)
+        cv2.imshow('result', self.cv_image)
+        cv2.waitKey(1)
         #print(f"Found {len(probs)} objects.")
 
 

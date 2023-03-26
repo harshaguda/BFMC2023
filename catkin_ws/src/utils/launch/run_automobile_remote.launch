@@ -1,5 +1,5 @@
 <launch>
     <include file="$(find utils)/launch/run_automobile.launch" />
-    <node pkg="sign_light_ped_detection_ssd" type="cam_pub.py" name="cameraPubNODE" output="screen"/> 
+    <!-- <node pkg="sign_light_ped_detection_ssd" type="cam_pub.py" name="cameraPubNODE" output="screen"/>  -->
     <node pkg="output" type="serialDealerNODE.py" 		name="serialDealerNODE"  		output="screen"/>
 </launch>
