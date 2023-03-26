@@ -50,7 +50,7 @@ class LaneDetection():
         """
         self.bridge = CvBridge()
         self.cv_image = np.zeros((640, 480))
-        rospy.init_node('LanesDetectionNode', anonymous=False)
+        rospy.init_node('StopLineDetection', anonymous=False)
         self.image_sub = rospy.Subscriber("/automobile/image_raw", Image, self.callback)
         self.stop_signnum = 0
         self.start = rospy.Time.now()
@@ -73,8 +73,9 @@ class LaneDetection():
         cv2.imshow('result', out_img[380:450,:])
         # print(np.count_nonzero(out_img[380:450,:]))
         nzcnt = np.count_nonzero(out_img[380:450,:])
+        # print(nzcnt)
         if nzcnt > 10000:
-            if rospy.Time.now() - self.start > rospy.Duration(3):
+            if rospy.Time.now() - self.start > rospy.Duration(5):
                 self.stop_signnum += 1
                 self.start = rospy.Time.now()
 
