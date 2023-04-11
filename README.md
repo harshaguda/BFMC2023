@@ -30,10 +30,22 @@ git clone https://github.com/ros/common_msgs.git
 git clone https://github.com/ros/actionlib.git
 git clone https://github.com/ros/geometry.git
 git clone https://github.com/ros/geometry2.git
-sudo apt install liborocos-bfl-dev liborocos-kdl-dev libbullet-dev ros-noetic-angles
+sudo apt install libbullet-dev libangles-dev
 ```
-Make the following changes to the file src/geometry2/tf2/CMakeLists.txt
+Install orocos from `https://github.com/orocos/orocos_kinematics_dynamics.git`
+(Keep in mind to use the release-1.5)
 
+Make the following changes to the file src/geometry2/tf2/CMakeLists.txt
+```diff
+diff --git a/tf/CMakeLists.txt b/tf/CMakeLists.txt
+ @@ -84,7 +83,11 @@ catkin_add_gtest(tf_quaternion_unittest test/quaternion.cpp)
+ target_link_libraries(tf_quaternion_unittest ${PROJECT_NAME})
+ 
+ catkin_add_gtest(test_transform_datatypes test/test_transform_datatypes.cpp)
+-target_link_libraries(test_transform_datatypes ${PROJECT_NAME} ${Boost_LIBRARIES})
++target_link_libraries(test_transform_datatypes tf ${console_bridge_LIBRARIES})
+
+ ```
 ```diff
 diff --git a/tf2/CMakeLists.txt b/tf2/CMakeLists.txt
 index a43e14b..7bdbbe9 100644
