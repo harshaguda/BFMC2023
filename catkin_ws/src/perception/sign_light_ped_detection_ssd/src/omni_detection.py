@@ -13,9 +13,9 @@ class LaneDetection():
         """
         Creates a bridge for converting the image from Gazebo image intro OpenCv image
         """
-        # device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # device=torch.device("cuda:0")
-        device=torch.device("cpu")
+        # device=torch.device("cpu")
         pkg_path = os.path.dirname(os.path.abspath(__file__))
         model_path =os.path.join(pkg_path, 'models/RealandSimul/mb1-ssd-Epoch-308-Loss-1.0236728725892104.pth')
         # model_path =os.path.join(pkg_path, 'models/RealandSimul/mb1-ssd-Epoch-1709-Loss-0.8591486492058199.pth') 
