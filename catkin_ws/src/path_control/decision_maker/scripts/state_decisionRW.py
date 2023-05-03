@@ -69,14 +69,25 @@ class DecisionMaker():
         #self.move(self.min_speed)
         steering_command = [21.61, -14.2]
         #print('start steering')
-        if direction=="Right": 
-            self.desired_heading = ((current_heading_pose-1)*(math.pi/2)) % math.pi
+        #if direction=="Right": 
+        #    self.desired_heading = ((current_heading_pose-1)*(math.pi/2)) % math.pi
            
             #print(self.desired_heading)
-            while not (self.desired_heading-0.1 <= self.heading <= self.desired_heading+0.1):
-                self.steer(steering_command[0])
-            while not (self.desired_heading-0.015 <= self.heading <= self.desired_heading+0.015):
-                self.steer(0.3*steering_command[0])
+         #   while not (self.desired_heading-0.1 <= self.heading <= self.desired_heading+0.1):
+          #      self.steer(steering_command[0])
+           # while not (self.desired_heading-0.015 <= self.heading <= self.desired_heading+0.015):
+            #    self.steer(0.3*steering_command[0])
+        if direction == "Right":
+            print("Taking Right turn")
+            self.move(0.14)
+            rospy.sleep(0.7)
+            self.move(0.14)
+            print("Encoder reading so far:", self.encoder_reading)
+            self.encoder_reading = 0
+            self.reset_encoder()
+            while (self.encoder_reading < right_curv_dist*encoder_factor*20):
+                self.steer(steering_command[1])
+            print(self.encoder_reading)
         elif direction=="Left":
             print('Taking Left turn')
             self.move(0.14)

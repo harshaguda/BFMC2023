@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from cpu_vision.ssd.mobilenetv1_ssd import create_mobilenetv1_ssd, create_mobilenetv1_ssd_predictor
+from cpu_vision.ssd.mobilenetv1_ssd import create_mobilenetv0_ssd, create_mobilenetv1_ssd_predictor
 import cv2
 import numpy as np
 import os
@@ -16,7 +16,6 @@ class LaneDetection():
         Creates a bridge for converting the image from Gazebo image intro OpenCv image
         """
         device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        print(device)
         # device=torch.device("cuda:0")
         # device=torch.device("cpu")
         pkg_path = os.path.dirname(os.path.abspath(__file__))
