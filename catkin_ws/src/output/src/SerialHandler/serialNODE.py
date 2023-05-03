@@ -95,7 +95,10 @@ class serialNODE():
                         self.__checkSubscriber(self.buff)
                         # print(self.buff)
                         if '@5' in self.buff:
-                            self.encpub.publish(float(self.buff.replace('@5:','').replace(';;','')))
+                            try:
+                                self.encpub.publish(float(self.buff.replace('@5:','').replace(';;','')))
+                            except:
+                                pass
                     self.buff=""
                 if self.isResponse:
                     self.buff+=read_chr
