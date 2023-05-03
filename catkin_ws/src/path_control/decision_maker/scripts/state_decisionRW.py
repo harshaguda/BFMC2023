@@ -8,6 +8,8 @@ import json
 
 from custom_msg.msg import Omnidetection
 
+from enum import IntEnum # for traffic lights
+
 left_curv_dist = 162.577 # (long_curve_radius = 103.5)*(pi/2 -> 1/4 of circle)
 right_curv_dist = 104.458 # (short_curve_radius = 66.5)*(pi/2 -> 1/4 of circle)
 encoder_factor = 8.1 # (1 cm = 7.9 rotations)
@@ -34,9 +36,19 @@ class DecisionMaker():
         rospy.init_node('decision_maker_node', anonymous=True)
         self.steer(0.0)
         self.move(0.14)
+
+        # Traffic lights
+        self.tl_start = self.Color.RED
+        self.tl_master = self.Color.RED
+        self.tl_slave = self.Colo.RED
+        self.tl_antimaster = self.COlor.RED
     
-   
-        
+
+   #  TrafficLightColor
+    class Color(IntEnum):
+        RED     = 0
+        YELLOW  = 1
+        GREEN   = 2     
 
     def stop_pedestrain(self):
         
@@ -88,6 +100,7 @@ class DecisionMaker():
             while (self.encoder_reading < right_curv_dist*encoder_factor*20):
                 self.steer(steering_command[1])
             print(self.encoder_reading)
+            
         elif direction=="Left":
             print('Taking Left turn')
             self.move(0.14)
@@ -217,6 +230,18 @@ class DecisionMaker():
         command = {"action": "2", "steerAngle": steer}
         self.command_publisher(command)
 
+    def tl_start_callback(self, data):
+        self.tl_start = data
+
+    def tl_master_callback(self, data):
+        self.tl_master = data
+
+    def tl_slave_callback(self, data):
+        self.tl_slave = data
+
+    def tl_antimaster_callback(self, data):
+        self.tl_antimaster = data
+
     def listener(self):
 
         # In ROS, nodes are uniquely named. If two nodes with the same
@@ -231,9 +256,17 @@ class DecisionMaker():
         rospy.Subscriber('/automobile/IMU', IMU, self.update_imu)
         rospy.Subscriber('/automobile/trafficlight/master', Byte, self.update_traffic_light)
         rospy.Subscriber('/sensor/encoder', Float32, self.update_encoder_readings)
-        # spin() simply keeps python from exiting until this node is stopped
+
+
+        ## Traffic lights
+        rospy.Subscriber('/automobile/trafficlight/start', Byte, self.tl_start_callback)
+        rospy.Subscriber('/automobile/trafficlight/master', Byte, self.tl_master_callback)
+        rospy.Subscriber('/automobile/trafficlight/slave', Byte, self.tl_slave_callback)
+        rospy.Subscriber('/automobile/trafficlight/antimaster', Byte, self.tl_antimaster_callback)
+        
         # self.decisions()
 
+        # spin() simply keeps python from exiting until this node is stopped
         rospy.spin()
 
 # if current_state == 'move':
