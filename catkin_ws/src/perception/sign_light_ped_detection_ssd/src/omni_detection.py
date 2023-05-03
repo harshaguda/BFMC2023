@@ -8,14 +8,17 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from custom_msg.msg import Omnidetection
 import torch
+import time
+
 class LaneDetection():
     def __init__(self):
         """
         Creates a bridge for converting the image from Gazebo image intro OpenCv image
         """
-        # device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        print(device)
         # device=torch.device("cuda:0")
-        device=torch.device("cpu")
+        # device=torch.device("cpu")
         pkg_path = os.path.dirname(os.path.abspath(__file__))
         model_path =os.path.join(pkg_path, 'models/RealandSimul/mb1-ssd-Epoch-308-Loss-1.0236728725892104.pth')
         # model_path =os.path.join(pkg_path, 'models/RealandSimul/mb1-ssd-Epoch-1709-Loss-0.8591486492058199.pth') 
@@ -35,6 +38,7 @@ class LaneDetection():
         """
         :param data: sensor_msg array containing the image in the Gazsbo format
         """
+        now = time.time()
         self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2RGB)
         bboxs, labels, probs = self.predictor.predict(image, 10, 0.4)
@@ -57,10 +61,11 @@ class LaneDetection():
                         1,  # font scale
                         (255, 0, 255),
                         2)  # line type
-        cv2.imshow('result', self.cv_image)
-        cv2.waitKey(1)
-        #print(f"Found {len(probs)} objects.")
-
+        #cv2.imshow('result', self.cv_image)
+        # cv2.waitKey(1)
+        print(f"Found {len(probs)} objects.")
+        fps = 1/(time.time() - now) 
+        print('FPS: ',fps)
 
 if __name__ == '__main__':
     try:

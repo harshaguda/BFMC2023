@@ -49,4 +49,17 @@ index a43e14b..7bdbbe9 100644
 +catkin_add_gtest(test_transform2_datatypes test/test_transform_datatypes.cpp)
 +target_link_libraries(test_transform2_datatypes tf2  ${console_bridge_LIBRARIES})
 +add_dependencies(test_transform2_datatypes ${catkin_EXPORTED_TARGETS})
+
+
+
+```
+
+
+### Optimized Detection
+
+```bash
+roslaunch utils run_automobile_remote.launch
+cd ~/jetson-inference/build/aarch64/bin 
+./remote_optimized_detection.py
+rostopic echo /perception/omni_detection
 ```

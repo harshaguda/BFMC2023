@@ -269,7 +269,7 @@ class LaneDetection():
         self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         img, curverad = vid_pipeline(self.cv_image)
         
-        cv2.imshow('result', img)
+#        cv2.imshow('result', img)
         # cmd = '{\"action\": \"2\", \"steerAngle\": 0.0}'
         cmd = get_steer_cmd(curverad)
         # pub.publish(cmd)
