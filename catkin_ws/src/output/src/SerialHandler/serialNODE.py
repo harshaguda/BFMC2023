@@ -37,7 +37,7 @@ import rospy
 
 from std_msgs.msg      import String, Float32
 from utils.srv        import subscribing, subscribingResponse
-
+import re
 class serialNODE():
     def __init__(self):
         """It forwards the control messages received from socket to the serial handling node. 
@@ -49,6 +49,7 @@ class serialNODE():
         self.serialCom = serial.Serial(devFile,19200,timeout=0.1)
         self.serialCom.flushInput()
         self.serialCom.flushOutput()
+        self.total_enc = 0.0
 
         # log file init
         self.historyFile = FileHandler(logFile)
@@ -66,7 +67,7 @@ class serialNODE():
         
         self.subscribe = rospy.Service("command_feedback_en", subscribing, self._subscribe)   
 
-        self.encpub = rospy.Publisher("/sensor/encoder", Float32, queue_size=1)      
+        self.encpub = rospy.Publisher("/sensor/encoder", Float32, queue_size=10)      
     
      # ===================================== RUN ==========================================
     def run(self):
@@ -76,6 +77,16 @@ class serialNODE():
         self._read()    
         
     # ===================================== READ ==========================================
+    def read_encoder(self):
+        
+        line = self.buff#.decode('utf-8')
+        x = re.findall("\d+\.\d+", line)
+        if len(x) == 1:
+            val_enc = float(x[0])
+        else:
+            val_enc = 0.0
+        return val_enc
+
     def _read(self):
         """ It's represent the reading activity on the the serial.
         """
@@ -95,10 +106,13 @@ class serialNODE():
                         self.__checkSubscriber(self.buff)
                         # print(self.buff)
                         if '@5' in self.buff:
-                            try:
-                                self.encpub.publish(float(self.buff.replace('@5:','').replace(';;','')))
-                            except:
-                                pass
+                            
+                            val = self.read_encoder()
+                            # print(val)
+                            self.total_enc += val
+                            # print(self.total_enc)
+                            print(val)
+                            self.encpub.publish(val)
                     self.buff=""
                 if self.isResponse:
                     self.buff+=read_chr

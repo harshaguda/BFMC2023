@@ -231,6 +231,7 @@ def vid_pipeline(img):
     dst_ = np.float32([(0, 480), (0,0), (640,0), (640,480)])
 
     img_ = perspective_warp(img_, src=initp, dst=dst_)
+    cv2.imshow('img_', img_)
     out_img, curves, lanes, ploty = sliding_window(img_, draw_windows=False)
     curverad =get_curve(img, curves[0], curves[1])
     lane_curve = np.mean([curverad[0], curverad[1]])
@@ -269,10 +270,11 @@ class LaneDetection():
         self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         img, curverad = vid_pipeline(self.cv_image)
         
-#        cv2.imshow('result', img)
+        cv2.imshow('result', img)
         # cmd = '{\"action\": \"2\", \"steerAngle\": 0.0}'
         cmd = get_steer_cmd(curverad)
         # pub.publish(cmd)
+        print(cmd)
         
         key = cv2.waitKey(1) & 0xFF
         

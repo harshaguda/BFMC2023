@@ -43,18 +43,22 @@ class CameraPub():
 
     def run(self):
         while True:
-            ret_val, image = self.video_capture.read()
-            print(image.shape)
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-            imageObject = CvBridge().cv2_to_imgmsg(image, "bgr8")
-            imageObject.header.stamp = rospy.Time.now()
-            self.publisher.publish(imageObject)
+            try:
+                ret_val, image = self.video_capture.read()
+                print(image.shape)
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                imageObject = CvBridge().cv2_to_imgmsg(image, "bgr8")
+                imageObject.header.stamp = rospy.Time.now()
+                self.publisher.publish(imageObject)
             #cv2.imshow('image', image)
-            #cv2.waitKey(1)
-
+                key = cv2.waitKey(1)
+                if key == 27:
+                    break
+            except:
+                break
 if __name__ == '__main__':
     try:
         nod = CameraPub()
         nod.run()
     except rospy.ROSInterruptException:
-        pass
+        exit()

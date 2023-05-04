@@ -33,6 +33,7 @@
 
 namespace periodics
 {
+    float total_encoder_readings = 0;
 
     /** \brief CEncoderPublisher contructor
      *
@@ -78,7 +79,8 @@ namespace periodics
     {
         if(!m_isActive) return;
         float l_rps = m_encoder.getSpeedRps();
-        m_serial.printf("@5:%.2f;;\r\n",l_rps);  
+        total_encoder_readings += l_rps;
+        m_serial.printf("@5:%.2f;;\r\n",total_encoder_readings);  
     }                        
 
 }; // namespace periodics
