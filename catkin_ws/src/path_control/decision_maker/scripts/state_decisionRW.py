@@ -15,7 +15,7 @@ from enum import IntEnum # for traffic lights
 
 left_curv_dist = 162.577 # (long_curve_radius = 103.5)*(pi/2 -> 1/4 of circle)
 right_curv_dist = 104.458 +20 # (short_curve_radius = 66.5)*(pi/2 -> 1/4 of circle)
-encoder_factor = 1 # (1 cm = 7.9 rotations)
+encoder_factor = 1.0 # (1 cm = 7.9 rotations)
 act_vehicle_speed = 35 # (If speed is given as 12 cm/s, actual speed is around 35 cm/s)
 
 class DecisionMaker():
@@ -98,6 +98,7 @@ class DecisionMaker():
         init_encoder = self.encoder_reading
         self.move(self.max_speed)
         while ((self.encoder_reading - init_encoder) < enc_dist):
+            print((self.encoder_reading - init_encoder), enc_dist)
             self.steer(0.0)
         # self.move(0.0)
         # rospy.sleep(10)
@@ -162,16 +163,24 @@ class DecisionMaker():
 
     def manual_maneuver(self):
         if self.stopcounter == 1:
+            print('Steering right')
             self.move(self.max_speed)
             self.distance(self.stop_distance)
             self.take_turn("Right")
+            print('Stopped')
             
-        elif self.stopcounter in [2, 4]:
+        elif self.stopcounter == 2:
             self.distance(self.stop_distance)
             rospy.loginfo("Stopping for Stop sign.")
             self.move(0.0)
             rospy.sleep(3)
             self.take_turn("Left")
+
+        elif self.stopcounter == 4:
+            self.distance(self.stop_distance)
+            rospy.loginfo("No Traffic signs")
+            self.take_turn("Left")
+
         elif self.stopcounter == 3:
             self.distance(self.stop_distance)
             self.move(0.0)
@@ -181,6 +190,8 @@ class DecisionMaker():
             self.move(0.0)
             rospy.sleep(3.0)
             self.take_turn("Right")
+            # self.move(0.0)
+            self.distance(140)
             self.move(0.0)
 
     def lane_count(self, data):
