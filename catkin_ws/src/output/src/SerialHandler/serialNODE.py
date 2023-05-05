@@ -111,7 +111,7 @@ class serialNODE():
                             # print(val)
                             self.total_enc += val
                             # print(self.total_enc)
-                            print(val)
+                            # print(val)
                             self.encpub.publish(val)
                     self.buff=""
                 if self.isResponse:

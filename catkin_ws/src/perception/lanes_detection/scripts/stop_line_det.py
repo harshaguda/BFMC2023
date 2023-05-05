@@ -75,7 +75,7 @@ class LaneDetection():
        # print(np.count_nonzero(out_img[380:450,:]))
         nzcnt = np.count_nonzero(out_img[380:450,:])
         print('Pixel count:', nzcnt)
-        if nzcnt > 50000:
+        if nzcnt > 9500:
             if rospy.Time.now() - self.start > rospy.Duration(5):
                 self.stop_signnum += 1
                 self.start = rospy.Time.now()

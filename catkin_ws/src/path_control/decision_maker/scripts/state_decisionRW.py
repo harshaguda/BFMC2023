@@ -13,8 +13,8 @@ from custom_msg.msg import Omnidetection
 from enum import IntEnum # for traffic lights
 
 left_curv_dist = 162.577 # (long_curve_radius = 103.5)*(pi/2 -> 1/4 of circle)
-right_curv_dist = 104.458 # (short_curve_radius = 66.5)*(pi/2 -> 1/4 of circle)
-encoder_factor = 8.1 # (1 cm = 7.9 rotations)
+right_curv_dist = 104.458 +20 # (short_curve_radius = 66.5)*(pi/2 -> 1/4 of circle)
+encoder_factor = 141 # (1 cm = 7.9 rotations)
 act_vehicle_speed = 35 # (If speed is given as 12 cm/s, actual speed is around 35 cm/s)
 
 class DecisionMaker():
@@ -37,7 +37,7 @@ class DecisionMaker():
         # self.
         rospy.init_node('decision_maker_node', anonymous=True)
         self.steer(0.0)
-        self.move(0.12)
+        self.move(0.24)
 
         # self.ser = serial.Serial('/dev/ttyACM0', 19200)
 
@@ -77,15 +77,29 @@ class DecisionMaker():
         if abs(diff) < 0.1 :
             self.steer(diff*100)
             # print(diff)
+    def distance(self, distance):
+        enc_dist = distance*encoder_factor
+        self.move(0.0)
+        init_encoder = self.encoder_reading
+        self.move(0.24)
+        while ((self.encoder_reading - init_encoder) < enc_dist):
+            self.steer(0.0)
+        self.move(0.0)
+        rospy.sleep(10)
         
+
     def take_turn(self, direction):
         self.go_straight = False
         #self.move(0.14)
         # rospy.sleep(1.2) # Time to aligh rear axle to stop line
         #self.move(self.min_speed)
-        # steering_command = [21.61, 14.2]
+        steering_command = [-14.2, 22.2]
+        self.move(0.0)
+        init_enc = self.encoder_reading
+        print(init_enc)
+        # time.sleep()
         self.steer(0.0)
-        steering_command = [-12.2, 21.61]
+        # steering_command = [14.2, 21.61]
         #print('start steering')
         #if direction=="Right": 
         #    self.desired_heading = ((current_heading_pose-1)*(math.pi/2)) % math.pi
@@ -97,25 +111,25 @@ class DecisionMaker():
             #    self.steer(0.3*steering_command[0])
         if direction == "Right":
             print("Taking Right turn")
-            self.move(0.14)
+            # self.distance(60)
+            self.move(0.22)
             # rospy.sleep(0.7)
-            self.move(0.14)
+            # self.move(0.20)
             print("Encoder reading so far:", self.encoder_reading)
             self.encoder_reading = 0
             self.reset_encoder()
             print('Encoder reset done: ', self.encoder_reading)
 
             
-            while (self.encoder_reading < right_curv_dist*encoder_factor):
-                print(self.encoder_reading, right_curv_dist*encoder_factor)
+            while ((self.encoder_reading -init_enc)< right_curv_dist*encoder_factor):
+                print((self.encoder_reading -init_enc), right_curv_dist*encoder_factor)
                 self.steer(steering_command[1])
             print(self.encoder_reading)
             
         elif direction=="Left":
             print('Taking Left turn')
-            self.move(0.14)
-            # rospy.sleep(0.7) 
-            self.move(0.14)
+            # self.distance(60)
+            self.move(0.22)
             print('Encoder reading so far:', self.encoder_reading)
             self.encoder_reading = 0
             self.reset_encoder()
@@ -123,8 +137,8 @@ class DecisionMaker():
             print(self.encoder_reading, left_curv_dist*encoder_factor)
 
             #self.move(0.2)
-            while (self.encoder_reading < (left_curv_dist*encoder_factor)):
-                self.steer(steering_command[1])
+            while ((self.encoder_reading - init_enc )< (left_curv_dist*encoder_factor)):
+                self.steer(steering_command[0])
             #rospy.sleep(1.2)
             #self.steer(0.3*steering_command[1])
             #rospy.sleep(1.5)
@@ -170,11 +184,11 @@ class DecisionMaker():
     def manual_maneuver(self):
         if self.stopcounter == 1:
             self.move(self.max_speed)
-        elif self.stopcounter in [2, 3, 7]:
-            rospy.loginfo("Stopping for Stop sign.")
-            self.move(0.0)
-            rospy.sleep(2.6)
-            self.move(self.max_speed)
+        # elif self.stopcounter in [2, 3, 7]:
+        #     rospy.loginfo("Stopping for Stop sign.")
+        #     self.move(0.0)
+        #     rospy.sleep(2.6)
+        #     self.move(self.max_speed)
         elif self.stopcounter == 4:
             rospy.loginfo("Priority sign is detected, not stopping")
 
@@ -185,6 +199,9 @@ class DecisionMaker():
             self.take_turn("Right")
         if self.stopcounter == 2:
             self.take_turn("Left")
+        if self.stopcounter == 4:
+            self.take_turn("Left")
+        
 
     def update_heading(self, data):
         self.heading = 0.5*(data.rotA + data.rotB)
@@ -223,7 +240,7 @@ class DecisionMaker():
         self.traffic_light = data.data     
 
     def update_encoder_readings(self, data):
-        self.encoder_reading += data.data
+        self.encoder_reading = data.data
 
     def reset_encoder(self):
         self.encoder_reading = 0
