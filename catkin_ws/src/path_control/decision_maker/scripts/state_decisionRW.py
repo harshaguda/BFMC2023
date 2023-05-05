@@ -4,7 +4,8 @@ import math
 import serial
 import re
 
-from std_msgs.msg import String, Int16, Byte, Float32
+from std_msgs.msg import String, Int16, Byte, Float32, Int32MultiArray
+
 from utils.msg import localisation, IMU
 import json
 
@@ -14,13 +15,16 @@ from enum import IntEnum # for traffic lights
 
 left_curv_dist = 162.577 # (long_curve_radius = 103.5)*(pi/2 -> 1/4 of circle)
 right_curv_dist = 104.458 +20 # (short_curve_radius = 66.5)*(pi/2 -> 1/4 of circle)
-encoder_factor = 141 # (1 cm = 7.9 rotations)
+encoder_factor = 1 # (1 cm = 7.9 rotations)
 act_vehicle_speed = 35 # (If speed is given as 12 cm/s, actual speed is around 35 cm/s)
 
 class DecisionMaker():
     def __init__(self):
+        self.start_car_firsttime = True
+        self.traffic3 = True
+        self.stop_distance = 39
         self.min_speed = 0.14
-        self.max_speed = 0.14
+        self.max_speed = 0.22
         self.moving = True
         self.stopped = True
         self.current_speed = 0.0
@@ -34,10 +38,15 @@ class DecisionMaker():
         self.go_straight = True
         self.traffic_light = 0
         self.encoder_reading = 0.0
+        self.traffic_light = [0, 0, 0, 0]
+        self.s1 = False
+        self.s2 = False
+        self.s3 = False
+        self.s4 = False
         # self.
         rospy.init_node('decision_maker_node', anonymous=True)
         self.steer(0.0)
-        self.move(0.24)
+        self.move(0.0)
 
         # self.ser = serial.Serial('/dev/ttyACM0', 19200)
 
@@ -46,8 +55,14 @@ class DecisionMaker():
         self.tl_master = self.Color.RED
         self.tl_slave = self.Color.RED
         self.tl_antimaster = self.Color.RED
-    
-
+        
+    def start_car(self):
+        # print('start')
+        print('Traffic light is Red/Yellow')
+        if self.s3:
+            print('Traffic Light is green')
+            self.move(self.max_speed)
+            self.start_car_firsttime = False
    #  TrafficLightColor
     class Color(IntEnum):
         RED     = 0
@@ -81,87 +96,52 @@ class DecisionMaker():
         enc_dist = distance*encoder_factor
         self.move(0.0)
         init_encoder = self.encoder_reading
-        self.move(0.24)
+        self.move(self.max_speed)
         while ((self.encoder_reading - init_encoder) < enc_dist):
             self.steer(0.0)
-        self.move(0.0)
-        rospy.sleep(10)
+        # self.move(0.0)
+        # rospy.sleep(10)
         
 
     def take_turn(self, direction):
-        self.go_straight = False
-        #self.move(0.14)
-        # rospy.sleep(1.2) # Time to aligh rear axle to stop line
-        #self.move(self.min_speed)
+        
         steering_command = [-14.2, 22.2]
         self.move(0.0)
         init_enc = self.encoder_reading
         print(init_enc)
-        # time.sleep()
         self.steer(0.0)
-        # steering_command = [14.2, 21.61]
-        #print('start steering')
-        #if direction=="Right": 
-        #    self.desired_heading = ((current_heading_pose-1)*(math.pi/2)) % math.pi
-           
-            #print(self.desired_heading)
-         #   while not (self.desired_heading-0.1 <= self.heading <= self.desired_heading+0.1):
-          #      self.steer(steering_command[0])
-           # while not (self.desired_heading-0.015 <= self.heading <= self.desired_heading+0.015):
-            #    self.steer(0.3*steering_command[0])
+        
         if direction == "Right":
             print("Taking Right turn")
-            # self.distance(60)
-            self.move(0.22)
-            # rospy.sleep(0.7)
-            # self.move(0.20)
-            print("Encoder reading so far:", self.encoder_reading)
-            self.encoder_reading = 0
-            self.reset_encoder()
-            print('Encoder reset done: ', self.encoder_reading)
+            self.move(self.max_speed)
 
-            
             while ((self.encoder_reading -init_enc)< right_curv_dist*encoder_factor):
-                print((self.encoder_reading -init_enc), right_curv_dist*encoder_factor)
+                # print((self.encoder_reading -init_enc), right_curv_dist*encoder_factor)
                 self.steer(steering_command[1])
-            print(self.encoder_reading)
+            # print('Encoder after right turn: ', self.encoder_reading)
+
             
         elif direction=="Left":
             print('Taking Left turn')
-            # self.distance(60)
-            self.move(0.22)
-            print('Encoder reading so far:', self.encoder_reading)
-            self.encoder_reading = 0
-            self.reset_encoder()
-            print('Encoder reset done: ', self.encoder_reading)
-            print(self.encoder_reading, left_curv_dist*encoder_factor)
+            self.distance(10)
+            self.move(self.max_speed)
 
-            #self.move(0.2)
             while ((self.encoder_reading - init_enc )< (left_curv_dist*encoder_factor)):
                 self.steer(steering_command[0])
-            #rospy.sleep(1.2)
-            #self.steer(0.3*steering_command[1])
-            #rospy.sleep(1.5)
-        # self.move(self.max_speed)
-        print('Encoder value after turning: ', self.encoder_reading)
-        self.move(0.0)
-        self.steer(0.0)
+            
+        print('Encoder value after turning: ', self.encoder_reading - init_enc)
+        # self.move(0.0)
         self.steer(0.0)
 
-        #self.steer(0.0)
-
-        self.go_straight = True
         print('stopped steering')
 
     def decisions(self):
-        # print(self.moving, self.no_ped)
+        
         if self.ped_area > self.ped_area_max:
             if self.moving:
                 rospy.loginfo("Pedestrian is detected, stopping for pedestrain.")
             self.stop_pedestrain()
             self.moving = False
-            
-            # self.moving = True
         if (self.no_ped) & (self.moving == False):
             rospy.loginfo("Moving.")
             self.move(self.max_speed)
@@ -171,36 +151,42 @@ class DecisionMaker():
     def detection_callback(self, data):
         labels = data.labels
         bboxs = data.bboxs
-        # print(labels)
         if 3 in labels:
             self.no_ped = False
             i = labels.index(3)
             self.ped_area = self.get_area(bboxs[i*4:(i+1)*4])
-            #print('Ped ', self.ped_area)
         else:
             self.no_ped = True
         self.decisions()
-        
+    
+
     def manual_maneuver(self):
         if self.stopcounter == 1:
             self.move(self.max_speed)
-        # elif self.stopcounter in [2, 3, 7]:
-        #     rospy.loginfo("Stopping for Stop sign.")
-        #     self.move(0.0)
-        #     rospy.sleep(2.6)
-        #     self.move(self.max_speed)
-        elif self.stopcounter == 4:
-            rospy.loginfo("Priority sign is detected, not stopping")
+            self.distance(self.stop_distance)
+            self.take_turn("Right")
+            
+        elif self.stopcounter in [2, 4]:
+            self.distance(self.stop_distance)
+            rospy.loginfo("Stopping for Stop sign.")
+            self.move(0.0)
+            rospy.sleep(3)
+            self.take_turn("Left")
+        elif self.stopcounter == 3:
+            self.distance(self.stop_distance)
+            self.move(0.0)
+        elif self.stopcounter == 5:
+            self.move(self.max_speed)
+            self.distance(self.stop_distance)
+            self.move(0.0)
+            rospy.sleep(3.0)
+            self.take_turn("Right")
+            self.move(0.0)
 
     def lane_count(self, data):
         self.stopcounter = data.data
+        print('Stop Line count: ', self.stopcounter)
         self.manual_maneuver()
-        if self.stopcounter == 1:
-            self.take_turn("Right")
-        if self.stopcounter == 2:
-            self.take_turn("Left")
-        if self.stopcounter == 4:
-            self.take_turn("Left")
         
 
     def update_heading(self, data):
@@ -236,8 +222,32 @@ class DecisionMaker():
                 rospy.loginfo("Vehicle stopped")
         # print(self.manual_turn_counter)
         
+        
     def update_traffic_light(self, data):
-        self.traffic_light = data.data     
+        if self.start_car_firsttime:
+            self.start_car()
+        
+
+        self.traffic_light = data.data
+        if self.traffic_light[2] == 2:
+            self.s3 = True
+        else:
+            self.s3 = False
+        if self.traffic_light[3] == 2:
+            self.s4 = True
+        else:
+            self.s4 = False
+
+        if self.stopcounter == 3:
+            print('Traffic light is red/yellow.')
+            if self.traffic3:
+                if self.s4:
+                    print('Traffic Light is green')
+                    self.move(self.max_speed)
+                    self.traffic3 = False
+            # rospy.loginfo("Priority sign is detected, not stopping")
+        # print(self.traffic_light)
+
 
     def update_encoder_readings(self, data):
         self.encoder_reading = data.data
@@ -261,17 +271,7 @@ class DecisionMaker():
         command = {"action": "2", "steerAngle": steer}
         self.command_publisher(command)
 
-    def tl_start_callback(self, data):
-        self.tl_start = data
-
-    def tl_master_callback(self, data):
-        self.tl_master = data
-
-    def tl_slave_callback(self, data):
-        self.tl_slave = data
-
-    def tl_antimaster_callback(self, data):
-        self.tl_antimaster = data
+    
 
     def listener(self):
 
@@ -283,17 +283,12 @@ class DecisionMaker():
         
         rospy.Subscriber("/perception/omni_detection", Omnidetection, self.detection_callback)
         rospy.Subscriber('/lanes/stop_line', Int16, self.lane_count)
-        rospy.Subscriber('/automobile/localisation', localisation, self.update_heading)
-        rospy.Subscriber('/automobile/IMU', IMU, self.update_imu)
-        rospy.Subscriber('/automobile/trafficlight/master', Byte, self.update_traffic_light)
+        # rospy.Subscriber('/automobile/localisation', localisation, self.update_heading)
+        # rospy.Subscriber('/automobile/IMU', IMU, self.update_imu)
+        rospy.Subscriber('/automobile/trafficlight', Int32MultiArray, self.update_traffic_light)
         rospy.Subscriber('/sensor/encoder', Float32, self.update_encoder_readings)
 
 
-        ## Traffic lights
-        rospy.Subscriber('/automobile/trafficlight/start', Byte, self.tl_start_callback)
-        rospy.Subscriber('/automobile/trafficlight/master', Byte, self.tl_master_callback)
-        rospy.Subscriber('/automobile/trafficlight/slave', Byte, self.tl_slave_callback)
-        rospy.Subscriber('/automobile/trafficlight/antimaster', Byte, self.tl_antimaster_callback)
         
         # self.decisions()
 
@@ -307,6 +302,7 @@ if __name__ == '__main__':
     try:
         node = DecisionMaker()
         node.listener()
+        
 
         
     except rospy.ROSInterruptException:
